@@ -52,12 +52,21 @@ public class StatusResultMatcherTests {
 	public void testStatusInt() throws Exception {
 		this.mockMvc.perform(get("/created")).andExpect(status().is(201));
 		this.mockMvc.perform(get("/badRequest")).andExpect(status().is(400));
-	}	
+        this.mockMvc.perform(get("/notFound")).andExpect(status().is(404));
+	}
+
+    @Test
+    public void testHttpStatus() throws Exception {
+        this.mockMvc.perform(get("/created")).andExpect(status().is(HttpStatus.CREATED));
+		this.mockMvc.perform(get("/badRequest")).andExpect(status().is(HttpStatus.BAD_REQUEST));
+        this.mockMvc.perform(get("/notFound")).andExpect(status().is(HttpStatus.NOT_FOUND));
+    }
 
 	@Test
-	public void testHttpStatus() throws Exception {
+	public void testStatusIs() throws Exception {
 		this.mockMvc.perform(get("/created")).andExpect(status().isCreated());
 		this.mockMvc.perform(get("/badRequest")).andExpect(status().isBadRequest());
+        this.mockMvc.perform(get("/notFound")).andExpect(status().isNotFound());
 	}	
 
 // TODO: allOf() doesn't compile from the MVN CLI
@@ -100,6 +109,11 @@ public class StatusResultMatcherTests {
 		@RequestMapping("/notImplemented")
 		@ResponseStatus(HttpStatus.NOT_IMPLEMENTED)
 		public @ResponseBody void notImplemented(){
+		}
+
+        @RequestMapping("/notFound")
+		@ResponseStatus(HttpStatus.NOT_FOUND)
+		public @ResponseBody void notFound(){
 		}
 	}
 }
