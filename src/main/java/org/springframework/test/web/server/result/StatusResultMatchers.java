@@ -44,15 +44,6 @@ public class StatusResultMatchers {
 	}
 
 
-    /**
-     * Assert the response status code is equal to an HttpStatus's value.
-     * @see #is(int)
-     */
-    public ResultMatcher is(HttpStatus httpStatus) {
-        return is(httpStatus.value());
-    }
-
-
 	/**
 	 * Assert the response reason with the given matcher.
 	 * @see HttpServletResponse#sendError(int, String)
@@ -481,5 +472,5 @@ public class StatusResultMatchers {
 			}
 		};
 	}
-
+	
 }
