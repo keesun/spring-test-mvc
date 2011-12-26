@@ -18,7 +18,7 @@ package org.springframework.test.web.server.result;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.server.MvcResult;
 import org.springframework.test.web.server.ResultMatcher;
 import org.springframework.test.web.support.JsonPathExpectationsHelper;
 
@@ -43,11 +43,10 @@ public class JsonPathResultMatchers {
 	 * TODO
 	 */
 	public <T> ResultMatcher value(final Matcher<T> matcher) {
-		return new ResultMatcherAdapter() {
-
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				jsonPathHelper.assertValue(response.getContentAsString(), matcher);
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String content = result.getResponse().getContentAsString();
+				JsonPathResultMatchers.this.jsonPathHelper.assertValue(content, matcher);
 			}
 		};
 	}
@@ -63,11 +62,10 @@ public class JsonPathResultMatchers {
 	 * TODO
 	 */
 	public ResultMatcher exists() {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				jsonPathHelper.exists(response.getContentAsString());
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String content = result.getResponse().getContentAsString();
+				JsonPathResultMatchers.this.jsonPathHelper.exists(content);
 			}
 		};
 	}
@@ -76,11 +74,10 @@ public class JsonPathResultMatchers {
 	 * TODO
 	 */
 	public ResultMatcher doesNotExist() {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				jsonPathHelper.doesNotExist(response.getContentAsString());
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String content = result.getResponse().getContentAsString();
+				JsonPathResultMatchers.this.jsonPathHelper.doesNotExist(content);
 			}
 		};
 	}

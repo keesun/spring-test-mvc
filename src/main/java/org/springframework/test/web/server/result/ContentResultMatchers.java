@@ -29,7 +29,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.server.MvcResult;
 import org.springframework.test.web.server.ResultMatcher;
 import org.springframework.test.web.support.XmlExpectationsHelper;
 import org.w3c.dom.Node;
@@ -53,11 +53,9 @@ public class ContentResultMatchers {
 	 * Assert the ServletResponse content type after parsing it as a MediaType. 
 	 */
 	public ResultMatcher type(final MediaType contentType) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				String actual = response.getContentType();
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String actual = result.getResponse().getContentType();
 				assertTrue("Content type not set", actual != null);
 				assertEquals("Content type", contentType, MediaType.parseMediaType(actual));
 			}
@@ -69,9 +67,9 @@ public class ContentResultMatchers {
 	 * @see HttpServletResponse#getCharacterEncoding()
 	 */
 	public ResultMatcher encoding(final String characterEncoding) {
-		return new ResultMatcherAdapter() {
-			public void matchResponse(MockHttpServletResponse response) {
-				String actual = response.getCharacterEncoding();
+		return new ResultMatcher() {
+			public void match(MvcResult result) {
+				String actual = result.getResponse().getCharacterEncoding();
 				assertEquals("Character encoding", characterEncoding, actual);
 			}
 		};
@@ -85,11 +83,9 @@ public class ContentResultMatchers {
 	 * </pre>
 	 */
 	public ResultMatcher string(final Matcher<? super String> matcher) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				MatcherAssert.assertThat("Response content", response.getContentAsString(), matcher);
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				MatcherAssert.assertThat("Response content", result.getResponse().getContentAsString(), matcher);
 			}
 		};
 	}
@@ -104,12 +100,11 @@ public class ContentResultMatchers {
 	/**
 	 * TODO
 	 */
-	public ResultMatcher bytes(final byte[] content) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				MatcherAssert.assertThat("Response content", response.getContentAsByteArray(), Matchers.equalTo(content));
+	public ResultMatcher bytes(final byte[] expectedContent) {
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				byte[] content = result.getResponse().getContentAsByteArray();
+				MatcherAssert.assertThat("Response content", content, Matchers.equalTo(expectedContent));
 			}
 		};
 	}
@@ -125,11 +120,10 @@ public class ContentResultMatchers {
 	 * @see MockMvcResultMatchers#xpath(String, Map, Object...)
 	 */
 	public ResultMatcher xml(final String xmlContent) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				xmlHelper.assertXmlEqual(xmlContent, response.getContentAsString());
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String content = result.getResponse().getContentAsString();
+				ContentResultMatchers.this.xmlHelper.assertXmlEqual(xmlContent, content);
 			}
 		};
 	}
@@ -141,11 +135,10 @@ public class ContentResultMatchers {
 	 * @see org.hamcrest.Matchers#hasXPath
 	 */
 	public ResultMatcher node(final Matcher<? super Node> matcher) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				xmlHelper.assertNode(response.getContentAsString(), matcher);
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String content = result.getResponse().getContentAsString();
+				ContentResultMatchers.this.xmlHelper.assertNode(content, matcher);
 			}
 		};
 	}
@@ -155,11 +148,10 @@ public class ContentResultMatchers {
 	 * @see <a href="http://code.google.com/p/xml-matchers/">xml-matchers</a> 
 	 */
 	public ResultMatcher source(final Matcher<? super Source> matcher) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			public void matchResponse(MockHttpServletResponse response) throws Exception {
-				xmlHelper.assertSource(response.getContentAsString(), matcher);
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				String content = result.getResponse().getContentAsString();
+				ContentResultMatchers.this.xmlHelper.assertSource(content, matcher);
 			}
 		};
 	}

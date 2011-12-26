@@ -16,13 +16,13 @@
 
 package org.springframework.test.web.server.result;
 
-import static org.springframework.test.web.AssertionErrors.assertEquals;
+import static org.springframework.test.web.AssertionErrors.*;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.springframework.test.web.server.MvcResult;
 import org.springframework.test.web.server.ResultMatcher;
-import org.springframework.web.servlet.FlashMap;
 
 public class FlashAttributeResultMatchers {
 
@@ -30,12 +30,10 @@ public class FlashAttributeResultMatchers {
 	 * TODO
 	 */
 	public <T> ResultMatcher attribute(final String name, final Matcher<T> matcher) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
+		return new ResultMatcher() {
 			@SuppressWarnings("unchecked")
-			protected void matchFlashMap(FlashMap flashMap) throws Exception {
-				MatcherAssert.assertThat("Flash attribute", (T) flashMap.get(name), matcher);
+			public void match(MvcResult result) throws Exception {
+				MatcherAssert.assertThat("Flash attribute", (T) result.getFlashMap().get(name), matcher);
 			}
 		};
 	}
@@ -47,13 +45,7 @@ public class FlashAttributeResultMatchers {
 	 * </pre>
 	 */
 	public <T> ResultMatcher attribute(final String name, final Object value) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			protected void matchFlashMap(FlashMap flashMap) throws Exception {
-				attribute(name, Matchers.equalTo(value));
-			}
-		};
+		return attribute(name, Matchers.equalTo(value));
 	}
 	
 	/**
@@ -63,12 +55,10 @@ public class FlashAttributeResultMatchers {
 	 * </pre>
 	 */
 	public <T> ResultMatcher attributeExists(final String... names) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			protected void matchFlashMap(FlashMap flashMap) throws Exception {
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
 				for (String name : names) {
-					attribute(name, Matchers.notNullValue());
+					attribute(name, Matchers.notNullValue()).match(result);
 				}
 			}
 		};
@@ -78,11 +68,9 @@ public class FlashAttributeResultMatchers {
 	 * TODO
 	 */
 	public <T> ResultMatcher attributeCount(final int count) {
-		return new ResultMatcherAdapter() {
-			
-			@Override
-			protected void matchFlashMap(FlashMap flashMap) throws Exception {
-				assertEquals("FlashMap size", count, flashMap.size());
+		return new ResultMatcher() {
+			public void match(MvcResult result) throws Exception {
+				assertEquals("FlashMap size", count, result.getFlashMap().size());
 			}
 		};
 	}	
