@@ -16,16 +16,14 @@
 
 package org.springframework.test.web.server.setup;
 
-import javax.servlet.ServletContext;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.server.MockMvc;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-import org.springframework.web.context.support.XmlWebApplicationContext;
+
+import javax.servlet.ServletContext;
 
 /**
  * The main class to import to access all available {@link MockMvcBuilder}s.
@@ -34,6 +32,7 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
  * favorite. To navigate, open the Preferences and type "favorites".
  *
  * @author Rossen Stoyanchev
+ * @author Keesun Baik
  */
 public class MockMvcBuilders {
 
@@ -43,9 +42,7 @@ public class MockMvcBuilders {
 	 */
 	public static ContextMockMvcBuilder annotationConfigSetup(Class<?>... configClasses) {
 		Assert.notEmpty(configClasses, "At least one @Configuration class is required");
-		AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
-		context.register(configClasses);
-		return new ContextMockMvcBuilder(context);
+		return new ContextMockMvcBuilder(configClasses);
 	}
 
 	/**
@@ -58,11 +55,9 @@ public class MockMvcBuilders {
 	 * </ul>
 	 */
 	public static ContextMockMvcBuilder xmlConfigSetup(String... configLocations) {
-		Assert.notEmpty(configLocations, "At least one XML config location is required");
-		XmlWebApplicationContext context = new XmlWebApplicationContext();
-		context.setConfigLocations(configLocations);
-		return new ContextMockMvcBuilder(context);
-	}
+        Assert.notEmpty(configLocations, "At least one XML config location is required");
+        return new ContextMockMvcBuilder(configLocations);
+    }
 
 	/**
 	 * Build a {@link MockMvc} from a fully initialized {@link WebApplicationContext}
