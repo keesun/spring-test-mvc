@@ -27,7 +27,6 @@ import static org.springframework.test.web.server.setup.MockMvcBuilders.xmlConfi
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.server.MockMvc;
 import org.springframework.web.servlet.resource.DefaultServletHttpRequestHandler;
 
@@ -57,13 +56,13 @@ public class WarRootDirectoryTests {
 		if (useJavaConfig) {
 			mockMvc =
 				annotationConfigSetup(WebConfig.class)
-					.configureWebAppRootDir(warRootDir, isClasspathRelative)
+					.webAppRootDir(warRootDir, isClasspathRelative)
 					.build();		
 		}
 		else {
 			mockMvc = 
 				xmlConfigSetup("classpath:org/springframework/test/web/server/samples/servlet-context.xml")
-					.configureWebAppRootDir(warRootDir, isClasspathRelative)
+					.webAppRootDir(warRootDir, isClasspathRelative)
 					.build();
 		}
 	}

@@ -236,7 +236,7 @@ public class StandaloneMockMvcBuilder extends AbstractMockMvcBuilder {
 	}	
 	
 	@Override
-	protected WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
+	protected final WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
 		StaticWebApplicationContext wac = new StaticWebApplicationContext();
 		wac.setServletContext(servletContext);
 		wac.refresh();

@@ -48,7 +48,7 @@ public class InitializedContextMockMvcBuilder extends ContextMockMvcBuilderSuppo
 	}	
 
 	@Override
-	protected WebApplicationContext initWebApplicationContext(ServletContext context) {
+	protected final WebApplicationContext initWebApplicationContext(ServletContext context) {
 		return this.applicationContext;
 	}
 

@@ -16,14 +16,14 @@
 
 package org.springframework.test.web.server.setup;
 
+import javax.servlet.ServletContext;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.server.MockMvc;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.WebApplicationContext;
-
-import javax.servlet.ServletContext;
 
 /**
  * The main class to import to access all available {@link MockMvcBuilder}s.
@@ -42,7 +42,7 @@ public class MockMvcBuilders {
 	 */
 	public static ContextMockMvcBuilder annotationConfigSetup(Class<?>... configClasses) {
 		Assert.notEmpty(configClasses, "At least one @Configuration class is required");
-		return new ContextMockMvcBuilder(configClasses);
+		return new ContextMockMvcBuilder().classes(configClasses);
 	}
 
 	/**
@@ -55,10 +55,10 @@ public class MockMvcBuilders {
 	 * </ul>
 	 */
 	public static ContextMockMvcBuilder xmlConfigSetup(String... configLocations) {
-        Assert.notEmpty(configLocations, "At least one XML config location is required");
-        return new ContextMockMvcBuilder(configLocations);
+		Assert.notEmpty(configLocations, "At least one XML config location is required");
+		return new ContextMockMvcBuilder().locations(configLocations);
     }
-
+	
 	/**
 	 * Build a {@link MockMvc} from a fully initialized {@link WebApplicationContext}
 	 * The context must have been setup with a {@link ServletContext} and refreshed.

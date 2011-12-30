@@ -16,10 +16,19 @@
 
 package org.springframework.test.web.server.setup;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.AnnotatedBeanDefinitionReader;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.FileSystemResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -30,12 +39,6 @@ import org.springframework.util.Assert;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.GenericWebApplicationContext;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A {@link MockMvc} builder that helps to configure and initialize a WebApplicationContext
@@ -50,56 +53,23 @@ import java.util.List;
  */
 public class ContextMockMvcBuilder extends ContextMockMvcBuilderSupport {
 
-	private ConfigurableWebApplicationContext applicationContext;
-
 	private String webResourceBasePath = "";
 
+	private final List<Class<?>> classes = new ArrayList<Class<?>>();
+
+	private final List<String> locations = new ArrayList<String>();
+	
+	private final List<String> profiles = new ArrayList<String>(); 
+
 	private ResourceLoader webResourceLoader = new FileSystemResourceLoader();
-
-	private List<Class<?>> configClassList = new ArrayList<Class<?>>();
-
-	private List<String> configLocationList = new ArrayList<String>();
-
-	private ApplicationContextInitializer<? extends ConfigurableWebApplicationContext>[] initializers;
 
 	/**
      * Protected constructor. Not intended for direct instantiation.
      * @see MockMvcBuilders#annotationConfigSetup(Class...)
      * @see MockMvcBuilders#xmlConfigSetup(String...)
+     * @param classes one or more @{@link Configuration} classes
 	 */
-	public ContextMockMvcBuilder(ConfigurableWebApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
-	}
-
-	public ContextMockMvcBuilder() {
-	}
-
-	public ContextMockMvcBuilder(Class<?>... configClasses) {
-		addClasses(configClasses);
-	}
-
-	public ContextMockMvcBuilder(String... configLocations) {
-		addLocations(configLocations);
-	}
-
-	public ContextMockMvcBuilder classes(Class<?>... configClasses) {
-		addClasses(configClasses);
-		return this;
-	}
-
-	public ContextMockMvcBuilder locations(String... configLocations) {
-		addLocations(configLocations);
-		return this;
-	}
-
-	private void addClasses(Class<?>[] configClasses) {
-		Assert.notEmpty(configClasses, "At least one @Configuration class is required");
-		this.configClassList.addAll(Arrays.asList(configClasses));
-	}
-
-	private void addLocations(String[] configLocations) {
-		Assert.notEmpty(configLocations, "At least one XML config location is required");
-		this.configLocationList.addAll(Arrays.asList(configLocations));
+	protected ContextMockMvcBuilder() {
 	}
 
     /**
@@ -112,36 +82,33 @@ public class ContextMockMvcBuilder extends ContextMockMvcBuilderSupport {
 	 *  
 	 * @param warRootDir the Web application root directory (should not end with a slash)
 	 */
-	public ContextMockMvcBuilder configureWebAppRootDir(String warRootDir, boolean isClasspathRelative) {
+	public ContextMockMvcBuilder webAppRootDir(String warRootDir, boolean isClasspathRelative) {
 		this.webResourceBasePath = warRootDir;
 		this.webResourceLoader = isClasspathRelative ? new DefaultResourceLoader() : new FileSystemResourceLoader();
 		return this;
 	}
 	
 	/**
+	 * TODO
+	 */
+	public ContextMockMvcBuilder classes(Class<?>... configClasses) {
+		this.classes.addAll(Arrays.asList(configClasses));
+		return this;
+	}
+
+	/**
+	 * TODO
+	 */
+	public ContextMockMvcBuilder locations(String... configLocations) {
+		this.locations.addAll(Arrays.asList(configLocations));
+		return this;
+	}
+	
+	/**
 	 * Activate the given profiles before the application context is "refreshed".
 	 */
-	public ContextMockMvcBuilder activateProfiles(String...profiles) {
-		this.applicationContext.getEnvironment().setActiveProfiles(profiles);
-		return this;
-	}
-
-	public <T extends ConfigurableWebApplicationContext> ContextMockMvcBuilder initializers(ApplicationContextInitializer<T>... initializers) {
-		this.initializers = initializers;
-		return this;
-	}
-
-	    /**
-	 * Apply the given {@link ApplicationContextInitializer}s before the application context is "refreshed".
-	 */
-	@SuppressWarnings("unchecked")
-	protected <T extends ConfigurableWebApplicationContext>
-			ContextMockMvcBuilder applyInitializers(ApplicationContextInitializer<T>... initializers) {
-		if(initializers != null) {
-			for (ApplicationContextInitializer<T> initializer : initializers) {
-			initializer.initialize((T) this.applicationContext);
-			}
-        }
+	public ContextMockMvcBuilder activeProfiles(String...profiles) {
+		this.profiles.addAll(Arrays.asList(profiles));
 		return this;
 	}
 	
@@ -156,23 +123,34 @@ public class ContextMockMvcBuilder extends ContextMockMvcBuilderSupport {
 	}
 
 	@Override
-	protected WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
-		if(this.applicationContext == null) {
-			DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
-			if(!configClassList.isEmpty()) {
-				AnnotatedBeanDefinitionReader reader = new AnnotatedBeanDefinitionReader(beanFactory);
-				reader.register(configClassList.toArray(new Class<?>[configClassList.size()]));
-			}
-			if(!configLocationList.isEmpty()) {
-				XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
-				reader.loadBeanDefinitions(configLocationList.toArray(new String[configLocationList.size()]));
-			}
-			this.applicationContext = new GenericWebApplicationContext(beanFactory);
+	protected final WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
+		
+		Assert.isTrue(!this.classes.isEmpty() || !this.locations.isEmpty(), 
+				"At least one @Configuration class or XML config location is required");
+		
+		StandardEnvironment environment = new StandardEnvironment();
+		if (!this.profiles.isEmpty()) {
+			environment.setActiveProfiles(this.profiles.toArray(new String[this.profiles.size()]));
 		}
-		this.applicationContext.setServletContext(servletContext);
-		applyInitializers(this.initializers);
-		this.applicationContext.refresh();
-		return this.applicationContext;
+
+		DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+		if(!classes.isEmpty()) {
+			AnnotatedBeanDefinitionReader reader = new AnnotatedBeanDefinitionReader(beanFactory);
+			reader.setEnvironment(environment);
+			reader.register(classes.toArray(new Class<?>[classes.size()]));
+		}
+		if(!locations.isEmpty()) {
+			XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
+			reader.setEnvironment(environment);
+			reader.loadBeanDefinitions(locations.toArray(new String[locations.size()]));
+		}
+		
+		ConfigurableWebApplicationContext applicationContext = new GenericWebApplicationContext(beanFactory);
+		applicationContext.setServletContext(servletContext);
+		applicationContext.setEnvironment(environment);
+		applicationContext.refresh();
+		
+		return applicationContext;
 	}
 
 }
